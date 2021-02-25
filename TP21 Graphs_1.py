@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from TP21_Downloading_data import *
 
-graph_names = ['^GSPC', '000001.SS', '^N100', '^HSI', '^KS11', '^N225']
+graph_names = ['^GSPC', '000001.SS', '^KS11', '^N225']
 
 def draw_graph(data, name):
 
