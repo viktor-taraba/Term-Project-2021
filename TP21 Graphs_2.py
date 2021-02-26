@@ -1,8 +1,6 @@
 import matplotlib.pyplot as plt
 from TP21_Downloading_data import *
 
-graph_names = ['^GSPC', '000001.SS', '^KS11', '^N225']
-
 def draw_graph(data, name):
 
 	font = {'fontname' : 'Times New Roman', 
@@ -14,9 +12,9 @@ def draw_graph(data, name):
 	plt.tight_layout()
 	plt.gcf().subplots_adjust(top=0.9, bottom=0.13, left=0.08)
 
-	plt.ylabel('\nЗначення індексу', **font)
+	plt.ylabel('\nЗміна значення індексу (у %)', **font)
 	plt.xlabel('Дата', **font)
-	plt.title('Динаміка індексу '+ name, {'fontname' : 'Times New Roman', 'size' : 30})
+	plt.title('Динаміка прибутковості індексу '+ name, {'fontname' : 'Times New Roman', 'size' : 30})
 
 	ax = plt.axes()
 	ax.spines["right"].set_visible(False)
