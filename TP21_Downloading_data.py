@@ -6,6 +6,7 @@ start_date = date(2000, 2, 1)
 end_date = date(2021, 2, 24)
 
 names_list = ['^GSPC', '000001.SS', '^KS11', '^N225']
+graph_names = ['SP500', 'SSE Composite Index', 'KOSPI', 'Nikkei225']
 index_list = []
 
 for i in range(len(names_list)):
