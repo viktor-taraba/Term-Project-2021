@@ -1,0 +1,284 @@
+\documentclass[aspectratio=169]{beamer}
+%\usecolortheme{beaver}
+\usepackage[english,ukrainian]{babel}
+\usepackage{hyperref}
+\hypersetup{colorlinks,urlcolor=blue}
+\makeatletter
+\DeclareUrlCommand\ULurl@@{%
+	\def\UrlFont{\ttfamily\color{blue}}%
+	\def\UrlLeft{\uline\bgroup}%
+	\def\UrlRight{\egroup}}
+\def\ULurl@#1{\hyper@linkurl{\ULurl@@{#1}}{#1}}
+\DeclareRobustCommand*\ULurl{\hyper@normalise\ULurl@}
+\makeatother
+\usepackage[table]{colortbl}
+\usecolortheme{whale}
+\usepackage{etoolbox,refcount}
+\usepackage{multicol}
+
+\newcounter{countitems}
+\newcounter{nextitemizecount}
+\newcommand{\setupcountitems}{%
+	\stepcounter{nextitemizecount}%
+	\setcounter{countitems}{0}%
+	\preto\item{\stepcounter{countitems}}%
+}
+\makeatletter
+\newcommand{\computecountitems}{%
+	\edef\@currentlabel{\number\c@countitems}%
+	\label{countitems@\number\numexpr\value{nextitemizecount}-1\relax}%
+}
+\newcommand{\nextitemizecount}{%
+	\getrefnumber{countitems@\number\c@nextitemizecount}%
+}
+\newcommand{\previtemizecount}{%
+	\getrefnumber{countitems@\number\numexpr\value{nextitemizecount}-1\relax}%
+}
+\makeatother    
+\newenvironment{AutoMultiColItemize}{%
+	\ifnumcomp{\nextitemizecount}{>}{3}{\begin{multicols}{2}}{}%
+		\setupcountitems\begin{itemize}}%
+		{\end{itemize}%
+		\unskip\computecountitems\ifnumcomp{\previtemizecount}{>}{3}{\end{multicols}}{}}
+\usepackage[utf8]{inputenc}
+
+\title{Використання методів deep learning для прогнозування динаміки фондових індексів}
+\author{Тараба Віктор\\ Науковий керівник: Ставицький А. В.}
+\institute{Київський національний університет імені Тараса Шевченка\\Економічний факультет\\Кафедра економічної кібернетики}
+
+\begin{document}
+	
+	\begin{frame}
+		\titlepage
+	\end{frame}
+	
+	\begin{frame}
+		\frametitle{План презентації}
+		\setbeamertemplate{section in toc}[circle]
+		%\setbeamercolor{section in toc}{fg=UniBlue}
+		%\setbeamercolor*{section in toc}{fg=UniBlue}
+		\tableofcontents
+	\end{frame}
+	
+	\section{Опис дослідження та вхідних даних}
+	
+	\begin{frame}
+		\frametitle{Опис дослідження}
+		\begin{itemize}
+			\item \alert {Метою дослідження} є аналіз динаміки фондових індексів та аналіз прибутковості торгових стратегій, що базуються на прогнозах моделей штучних нейронних мереж.
+			\bigskip
+			\item \alert {Об’єктом дослідження} є фондові індекси 4 країн (США – S\&P 500, КНР – SSE Composite Index, Південна Корея – Korea Composite Stock Price Index, Японія – Nikkei225).
+			\bigskip
+			\item \alert {Предметом дослідження} є методи прогнозування фондових індексів та їх практичне застосування.
+			
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}
+		\frametitle{Вхідні дані}
+		\begin{itemize}
+			\item \alert {Дані} (Open, High, Low, Close, Volume) з 2000 по 2021 рр. зі щоденною періодичністю;  завантажено за допомогою біблотеки yfinance (з Yahoo! Finance) \\
+			\bigskip
+			\item На основі цих даних було розраховано такі показники:\\
+			\begin{itemize}
+				\begin{AutoMultiColItemize}
+					\item[\textcolor{orange}{\textbullet}] Percent change 1
+					\item[\textcolor{orange}{\textbullet}] Percent change 5
+					\item[\textcolor{orange}{\textbullet}] Percent change 30 
+					\item[\textcolor{orange}{\textbullet}] Percent change Open 
+					\item[\textcolor{orange}{\textbullet}] Percent change High 
+					\item[\textcolor{orange}{\textbullet}] Percent change Low 
+					\item[\textcolor{orange}{\textbullet}] Percent change Volume 
+					\item[\textcolor{orange}{\textbullet}] DI
+					\item[\textcolor{orange}{\textbullet}] ERI 
+					\item[\textcolor{orange}{\textbullet}] SMA 1
+					\item[\textcolor{orange}{\textbullet}] EMA 1 
+					\item[\textcolor{orange}{\textbullet}] LWMA 1
+					\item[\textcolor{orange}{\textbullet}] MAE 1
+					\item[\textcolor{orange}{\textbullet}] MAE 2
+					\item[\textcolor{orange}{\textbullet}] MAE 3 
+					\item[\textcolor{orange}{\textbullet}] MAE 4
+					\item[\textcolor{orange}{\textbullet}] MAE 5
+					\item[\textcolor{orange}{\textbullet}] MAE 6
+					\item[\textcolor{orange}{\textbullet}] CCI 1 
+					\item[\textcolor{orange}{\textbullet}] SO 1
+					\item[\textcolor{orange}{\textbullet}] CMO 1 
+				\end{AutoMultiColItemize}
+			\end{itemize}
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}
+		\frametitle{Вхідні дані}
+		\begin{center}
+			Зміна значення фондових індексів (2000-2021 рр) \\
+			\bigskip
+			\includegraphics[scale=0.55]{ind.jpg}
+		\end{center}
+	\end{frame}
+	
+	\section{Навчання моделей}
+	
+	\begin{frame}
+		\frametitle{Оптимізаційний алгоритм}
+		\[ v_{t+1} = \beta_{1} v_{t} + (1-\beta_{1})\nabla J(W_{t}) \]\\
+		\[ cache_{t+1} = \beta_{2} cache_{t} + (1-\beta_{2})(\nabla J(W_{t}))^{2} \]\\
+		\[ W_{t+1} = W_{t}-\frac{\eta}{\sqrt{cache_{t+1}+\varepsilon}}v_{t+1} \]
+		\bigskip
+		\begin{itemize}
+			\item \alert {Оптимізаційний алгоритм Adam} є стандартним вибором для більшості нейронних мереж. Значення параметрів – за замовчуванням ($\eta$=0.001, $\beta_{1}$=0.9, $\beta_{1}$=0.999, $\varepsilon$=1e-07). 
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}
+		\frametitle{Навчання моделі}
+		\begin{itemize}
+			\item \small Для роботи з нейронними мережами використано \alert {бібліотеки} Python \textit{tensorflow (keras)} та \textit{sklearn}.\\
+			\bigskip
+			\item \small \alert {Гіперпараметри}, які використовувалися при підборі моделей:\\
+			\begin{itemize}
+				\item[\textcolor{orange}{\textbullet}] \textit{nodes\_first} – к-ть нейронів в першому шарі; \textit{nodes\_first} $\in$ [4, 8, 16, 32];\\
+				\item[\textcolor{orange}{\textbullet}] \textit{nodes\_second} – к-ть нейронів в другому шарі; \textit{nodes\_second} $\in$ [4, 8, 16, 32];\\
+				\item[\textcolor{orange}{\textbullet}] \textit{batch} – к-ть елементів з набору даних, на яких «навчається» модель кожної епохи; \textit{batch} $\in$ [64, 128, 256, 512, 1024]\\ 
+				\item[\textcolor{orange}{\textbullet}] \textit{dropout\_include} – набуває значення 1, якщо при побудові моделі використовується dropout для регуляризації; 0 інакше;\\
+				\item[\textcolor{orange}{\textbullet}] \textit{rate} – параметр для dropout, відповідає за ймовірність виключення нейронів з мережі; \textit{rate} $\in$ [0.2, 0.3, 0.4, 0.5].\\
+				\bigskip
+			\end{itemize}
+			\item \small Точка, в якій варто зупинити навчання моделі, аби уникнути перенавчання, визначалася автоматично за допомогою функції \textit{tf.keras.callbacks.EarlyStopping}. 
+		\end{itemize}
+	\end{frame}
+	
+	\section{Результати торгових стратегій, які базуються на прогнозах нейронних мереж}
+	
+	\begin{frame}
+		\frametitle{Результати торгових стратегій, які базуються на прогнозах НМ}
+		\begin{center}
+			Прибутковість стратегії #1 (індекс KOSPI) \\
+			\bigskip
+			\includegraphics[scale=0.3]{index.jpg}
+		\end{center}
+	\end{frame}
+	
+	\begin{frame}
+		\frametitle{Порівняння результатів торгових стратегій}
+		Результати без врахування транзакційних витрат:\\
+		\bigskip
+		\begin{tabular}{ |p{7.8cm}||p{1.6cm}|p{1.6cm}|p{1.6cm}|  }
+			\hline
+			\multicolumn{4}{|c|}{S\&P 500} \\
+			\hline
+			Показник& Модель #1 &Модель #2&Модель #3\\
+			\hline
+			Загальний прибуток (\%)	&\cellcolor{pink!25}70.59&	\cellcolor{pink!25}80.02	&\cellcolor{pink!25}64.82\\
+			Buy-and-hold (\%) & \cellcolor{blue!8}95.99 & \cellcolor{blue!8}95.99 & \cellcolor{blue!8}95.99 \\
+			%\cellcolor{green!25}
+			Максимальне значення капіталу &	175.26&	180.02	&167.14\\
+			Мінімальне значення капіталу&	93.01	&89.90	&90.91\\
+			Закрито позицій&	202&	130&	142\\
+			Максимальний прибуток за одну операцію (\%)&	12.48&	10.37&	12.48\\
+			Мінімальний прибуток за одну операцію (\%)&	-15.96&	-22.25&	-17.84\\
+			\hline
+		\end{tabular}
+	\end{frame}
+	
+	\begin{frame}
+		\frametitle{Порівняння результатів торгових стратегій}
+		Результати без врахування транзакційних витрат:\\
+		\bigskip
+		\begin{tabular}{ |p{7.8cm}||p{1.6cm}|p{1.6cm}|p{1.6cm}|  }
+			\hline
+			\multicolumn{4}{|c|}{KOSPI} \\
+			\hline
+			Показник& Модель #1 &Модель #2&Модель #3\\
+			\hline
+			Загальний прибуток (\%)&\cellcolor{pink!25}20.40&	\cellcolor{pink!25}4.89&	\cellcolor{pink!25}6.15\\
+			Buy-and-hold (\%) & \cellcolor{blue!8}52.64 &\cellcolor{blue!8}52.64& \cellcolor{blue!8}52.64\\
+			%\cellcolor{green!25}
+			Максимальне значення капіталу &123.71&	104.89&	106.15	\\
+			Мінімальне значення капіталу&	72.66&	66.90&	54.77\\
+			Закрито позицій&	320&	369	&352\\
+			Максимальний прибуток за одну операцію (\%)&19.89&	14.08&	19.89	\\
+			Мінімальний прибуток за одну операцію (\%)&	-12.13&	-12.13&	-24.16\\
+			\hline
+		\end{tabular}
+	\end{frame}
+	
+	\begin{frame}
+		\frametitle{Порівняння результатів торгових стратегій}
+		Результати без врахування транзакційних витрат:\\
+		\bigskip
+		\begin{tabular}{ |p{7.8cm}||p{1.6cm}|p{1.6cm}|p{1.6cm}|  }
+			\hline
+			\multicolumn{4}{|c|}{Nikkei225} \\
+			\hline
+			Показник& Модель #1 &Модель #2&Модель #3\\
+			\hline
+			Загальний прибуток (\%)& \cellcolor{pink!25}29.09	&\cellcolor{pink!25}73.42&	\cellcolor{pink!25}40.31\\
+			Buy-and-hold (\%) & \cellcolor{blue!8}85.05 &\cellcolor{blue!8}85.05& \cellcolor{blue!8}85.05\\
+			%\cellcolor{green!25}
+			Максимальне значення капіталу &	160.73&	175.50&	140.54\\
+			Мінімальне значення капіталу&	94.32&	95.56	&87.45\\
+			Закрито позицій&	477&	203	&251\\
+			Максимальний прибуток за одну операцію (\%)&6.98	&14.11&	14.39	\\
+			Мінімальний прибуток за одну операцію (\%)&	-19.96&	-13.53&	-13.53\\
+			\hline
+		\end{tabular}
+	\end{frame}
+	
+	\begin{frame}
+		\frametitle{Порівняння результатів торгових стратегій}
+		Результати без врахування транзакційних витрат:\\
+		\bigskip
+		\begin{tabular}{ |p{7.8cm}||p{1.6cm}|p{1.6cm}|p{1.6cm}|  }
+			\hline
+			\multicolumn{4}{|c|}{SSE} \\
+			\hline
+			Показник& Модель #1 &Модель #2&Модель #3\\
+			\hline
+			Загальний прибуток (\%)&\cellcolor{green!25}31.41&	\cellcolor{pink!25}-11.22&	\cellcolor{green!25}18.88\\
+			Buy-and-hold (\%) & \cellcolor{blue!8}11.48 &\cellcolor{blue!8}11.48 &\cellcolor{blue!8}11.48\\
+			%\cellcolor{green!25}
+			Максимальне значення капіталу &	131.41&	116.06&	118.88\\
+			Мінімальне значення капіталу&	94.19&	84.86&	93.14\\
+			Закрито позицій&177&	161	&185	\\
+			Максимальний прибуток за одну операцію (\%)&	14.35&	21.53&	14.35\\
+			Мінімальний прибуток за одну операцію (\%)& -5.71&	-5.71&	-4.42	\\
+			\hline
+		\end{tabular}
+	\end{frame}
+	
+	\begin{frame}
+		\frametitle{Порівняння результатів торгових стратегій}
+		Результати з врахуванням транзакційних витрат:\\
+		\bigskip
+		\begin{tabular}{ |p{8cm}||p{2.3cm}|p{2.3cm}| }
+			\hline
+			\multicolumn{3}{|c|}{SSE} \\
+			\hline
+			Показник& Модель #1 &Модель #3\\
+			\hline
+			Загальний прибуток (\%)&\cellcolor{green!25}20.72&	\cellcolor{pink!25}8.78\\
+			Buy-and-hold (\%) & \cellcolor{blue!8}11.48 &\cellcolor{blue!8}11.48\\
+			%\cellcolor{green!25}
+			Максимальне значення капіталу &120.72	&108.78	\\
+			Мінімальне значення капіталу&90.14	&88.88	\\
+			Максимальний прибуток за одну операцію (\%)&	14.30	&14.30\\
+			Мінімальний прибуток за одну операцію (\%)&	-5.76	&-4.47\\
+			\hline
+		\end{tabular}
+	\end{frame}
+	
+	\section{Q\&A}
+	
+	\begin{frame}
+		\frametitle{Q\&A}
+		\begin{center}
+			\textcolor{blue}{\huge Дякую за увагу!} \\
+		\end{center}
+		\bigskip
+		\bigskip
+		Дані та код (для обробки даних, навчання моделей, розрахунків та побудови графіків) доступні за посиланням: 
+		\ULurl{https://github.com/Victor-T2001/Term-Project-2021}
+	\end{frame}
+	
+\end{document}
